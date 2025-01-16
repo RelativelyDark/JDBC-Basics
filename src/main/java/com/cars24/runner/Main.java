@@ -1,16 +1,5 @@
 package com.cars24.runner;
 
-import com.cars24.config.DbConfig;
-import com.cars24.dao.impl.CustomerDaoImpl;
-import com.cars24.data.req.AddCustomerReq;
-import com.cars24.data.req.CustomerProfileReq;
-import com.cars24.data.res.CustomerProfileRes;
-import com.cars24.sevices.CustomerService;
-import com.cars24.sevices.impl.CustomerServiceImpl;
-import com.cars24.util.DbUtil;
-
-import java.sql.DriverManager;
-import java.sql.SQLException;
 import java.util.Scanner;
 
 public class Main {
@@ -20,6 +9,8 @@ public class Main {
             System.out.println("Enter choice : ");
             System.out.println("1 for adding customer");
             System.out.println("2 for getting customer");
+            System.out.println("3 for updating customer");
+            System.out.println("4 for deleting customer");
             System.out.println("0 to exit");
             int choice = scanner.nextInt();
             switch(choice){
@@ -27,7 +18,11 @@ public class Main {
                 break;
                 case 2 : UI.getCustomer();
                 break;
-                case 0 : System.exit(0);
+                case 3 : UI.updateCustomer();
+                break;
+                case 4 : UI.deleteCustomer();
+                break;
+                default : System.exit(69);
             }
         }
     }

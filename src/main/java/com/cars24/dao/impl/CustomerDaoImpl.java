@@ -3,6 +3,8 @@ package com.cars24.dao.impl;
 import com.cars24.dao.CustomerDao;
 import com.cars24.data.req.AddCustomerReq;
 import com.cars24.data.req.CustomerProfileReq;
+import com.cars24.data.req.DeleteCustomerReq;
+import com.cars24.data.req.UpdateCustomerReq;
 import com.cars24.data.res.CustomerProfileRes;
 import com.cars24.util.DbUtil;
 
@@ -10,26 +12,28 @@ import java.sql.*;
 
 public class CustomerDaoImpl implements CustomerDao {
 
+    private final Connection connection = DbUtil.getDbConnection();
     private final static String INSERT_SUCCESS_MESSAGE = "Customer added successfully!";
     private final static String INSERT_ERROR_MESSAGE = "Error! while adding the customer";
 
     @Override
     public String createCustomer(AddCustomerReq addCustomerReq) {
 
-        Connection connection = DbUtil.getDbConnection();
-        String insertSQL =
-                "INSERT INTO customers (name,phone,email,address) VALUES"
-                        + "("+ "'" + addCustomerReq.getName() + "' ," + "'" + addCustomerReq.getPhone() + "' , '" + addCustomerReq.getEmail() + "' ,'" + addCustomerReq.getAddress() + "'" + ");";
-//        System.out.println(insertSQL);
+        String insertSQL = "INSERT INTO customers (name, phone, email, address) VALUES (?, ?, ?, ?)";
+        try{
+            PreparedStatement preparedStatement = connection.prepareStatement(insertSQL);
+            preparedStatement.setString(1, addCustomerReq.getName());
+            preparedStatement.setString(2, addCustomerReq.getPhone());
+            preparedStatement.setString(3, addCustomerReq.getEmail());
+            preparedStatement.setString(4, addCustomerReq.getAddress());
 
-        try {
-            Statement statement = connection.createStatement();
-            int rowsInserted = statement.executeUpdate(insertSQL);
-//            System.out.println(rowsInserted + " row(s) inserted.");
+            int rowsInserted = preparedStatement.executeUpdate();
+//            System.out.println("Rows inserted : " + rowsInserted);
             return INSERT_SUCCESS_MESSAGE;
-        } catch (SQLException e){
-            System.out.println("Error while inserting data to customer table " + e);
-            e.printStackTrace();
+        }
+
+        catch (Exception e){
+            System.out.println(e);
             return INSERT_ERROR_MESSAGE;
         }
     }
@@ -38,7 +42,6 @@ public class CustomerDaoImpl implements CustomerDao {
     public CustomerProfileRes getCustomer(CustomerProfileReq customerProfileReq) {
         CustomerProfileRes customerProfileRes = new CustomerProfileRes();
 
-        Connection connection = DbUtil.getDbConnection();
         String selectSQL = "SELECT name, phone, email, address FROM customers where email = ? or phone = ?";
 
         try {
@@ -62,29 +65,69 @@ public class CustomerDaoImpl implements CustomerDao {
     }
 
     @Override
-    public void updateCustomer(AddCustomerReq addCustomerReq) {
+    public String updateCustomer(UpdateCustomerReq updateCustomerReq) {
+        String selectSQL = "SELECT name, phone, email, address from customers where phone = ? or email = ?";
+        String updateSQL = "UPDATE customers SET name = ?, phone = ?, email = ?, address = ? where phone = ? or email = ?";
 
+        try {
+            PreparedStatement preparedStatement1 = connection.prepareStatement(selectSQL);
+            preparedStatement1.setString(1, updateCustomerReq.getCurphone());
+            preparedStatement1.setString(2, updateCustomerReq.getCurmail());
+
+            ResultSet resultSet = preparedStatement1.executeQuery();
+
+            if(resultSet.next()){
+
+                if(updateCustomerReq.getName() == null)
+                    updateCustomerReq.setName(resultSet.getString("name"));
+
+                if(updateCustomerReq.getPhone() == null)
+                    updateCustomerReq.setPhone(resultSet.getString("phone"));
+
+                if(updateCustomerReq.getMail() == null)
+                    updateCustomerReq.setMail(resultSet.getString("email"));
+
+                if(updateCustomerReq.getAddress() == null)
+                    updateCustomerReq.setAddress(resultSet.getString("address"));
+            }
+            else
+                return "No such entry";
+
+            System.out.println(updateCustomerReq);
+
+            PreparedStatement preparedStatement2 = connection.prepareStatement(updateSQL);
+            preparedStatement2.setString(1, updateCustomerReq.getName());
+            preparedStatement2.setString(2, updateCustomerReq.getPhone());
+            preparedStatement2.setString(3, updateCustomerReq.getMail());
+            preparedStatement2.setString(4, updateCustomerReq.getAddress());
+            preparedStatement2.setString(5, updateCustomerReq.getCurphone());
+            preparedStatement2.setString(6, updateCustomerReq.getCurmail());
+
+            int rows_inserted = preparedStatement2.executeUpdate();
+            return "Updated Successfully";
+
+        }
+        catch (SQLException e){
+            e.printStackTrace();
+        }
+        return "Failed";
     }
 
-    public String createCustomerV2(AddCustomerReq addCustomerReq){
-        Connection connection = DbUtil.getDbConnection();
-
-        String insertSQL = "INSERT INTO customers (name, phone, email, address) VALUES (?, ?, ?, ?)";
+    @Override
+    public String deleteCustomer(DeleteCustomerReq deleteCustomerReq) {
+        String deleteSQL = "DELETE FROM customers WHERE phone = ? or email = ?";
         try{
-            PreparedStatement preparedStatement = connection.prepareStatement(insertSQL);
-            preparedStatement.setString(1, addCustomerReq.getName());
-            preparedStatement.setString(2, addCustomerReq.getPhone());
-            preparedStatement.setString(3, addCustomerReq.getEmail());
-            preparedStatement.setString(4, addCustomerReq.getAddress());
+            PreparedStatement preparedStatement = connection.prepareStatement(deleteSQL);
+            preparedStatement.setString(1, deleteCustomerReq.getPhone());
+            preparedStatement.setString(2, deleteCustomerReq.getEmail());
 
-            int rowsInserted = preparedStatement.executeUpdate();
-//            System.out.println("Rows inserted : " + rowsInserted);
-            return INSERT_SUCCESS_MESSAGE;
+            int rows_deleted = preparedStatement.executeUpdate();
+            if(rows_deleted > 0)
+                return rows_deleted + " row(s) were deleted";
         }
-
-        catch (Exception e){
-            System.out.println(e);
-            return INSERT_ERROR_MESSAGE;
+        catch (SQLException e){
+            e.printStackTrace();
         }
+        return "Deleted Successfully";
     }
 }
