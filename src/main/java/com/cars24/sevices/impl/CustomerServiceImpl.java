@@ -33,14 +33,17 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     public String getCustomerProfile(CustomerProfileReq customerProfileReq) {
 
-        try {
+        try
+        {
             ProfileValidator.validateProfileReq(customerProfileReq);
             System.out.println(customerDaoimpl.getCustomer(customerProfileReq));
             return "Valid Search";
         }
+
         catch (Exception e){
             System.out.println(e.getMessage());
             return "";
+
         }
     }
 
