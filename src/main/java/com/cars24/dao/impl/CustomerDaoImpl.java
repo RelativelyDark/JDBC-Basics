@@ -66,6 +66,7 @@ public class CustomerDaoImpl implements CustomerDao {
 
     @Override
     public String updateCustomer(UpdateCustomerReq updateCustomerReq) {
+
         String selectSQL = "SELECT name, phone, email, address from customers where phone = ? or email = ?";
         String updateSQL = "UPDATE customers SET name = ?, phone = ?, email = ?, address = ? where phone = ? or email = ?";
 
@@ -91,7 +92,7 @@ public class CustomerDaoImpl implements CustomerDao {
                     updateCustomerReq.setAddress(resultSet.getString("address"));
             }
             else
-                return "No such entry";
+                throw new IllegalArgumentException("No such entry exists");
 
             System.out.println(updateCustomerReq);
 
@@ -112,6 +113,8 @@ public class CustomerDaoImpl implements CustomerDao {
         }
         return "Failed";
     }
+
+
 
     @Override
     public String deleteCustomer(DeleteCustomerReq deleteCustomerReq) {
